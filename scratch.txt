@@ -1,0 +1,19 @@
+For the shared we want to have union functionality
+
+Things like:
+file management, like creating files.
+
+For the client:
+The client will need to hash to dedupe. I think the client should hash before compressing because compressing is probably more taxing. Whatever is the most taxing should be done last.
+the client will want to be able to compress files. I dont think the server wants to do this though, since the client can compress it for the server as it would have to compress it anyways.
+
+The client can choose to store versions, but they could also choose to have zero history, instead opting to have them live on the server.
+However, the client must store what versions have existed, so they could ask the server for that version. 
+
+
+As for the process, We will then detect what file has changed, and the one that do will be hashed and staged. then when we commit we will compress the files. We can then push them. When we stage and push, we will modify the index. When we commit our changes, if our history is set to 0, we will simply hold onto the temprorary files until we push. When we push we will flush the history (if we get acked from the server). If our history is greater than 0, we will also hold onto the compressed files.
+
+The client can restore whole versions or files. Versions are pretty straight forward, you specify what version in history you want, then for each file in that version compare with the current files. If they differ, rewrite it. if they dont exist, make them. if they do exist and shouldnt, delete them. then you update the index and delete all the versions in between the current and the restored version. When it comes to individual file(s) it gets a bit more tricky. You have to specify the file and the version. Then you try to retrieve it and restore.
+
+
+for the server, we will wait for the client to push. When they do we will first try to write the file then update the index. we have to make sure that the write was succesfull before acking. The server can also be used to pull previous versions. And thats pretty much it, the server doesnt really need to do more than that.  
